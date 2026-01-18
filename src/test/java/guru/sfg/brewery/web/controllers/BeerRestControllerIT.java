@@ -32,9 +32,4 @@ public class BeerRestControllerIT extends BaseIT {
                 .andExpect(status().isOk());
     }
 
-//    @Test
-//    void willReturnUnAuthorizedStatus() throws Exception{
-//        mockMvc.perform(get("/beers/find"))
-//                .andExpect(status().isUnauthorized());
-//    }
 }
