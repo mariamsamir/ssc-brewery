@@ -1,5 +1,6 @@
 package guru.sfg.brewery.config;
 
+import guru.sfg.brewery.security.SfgPasswordEncoderFactories;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -11,6 +12,12 @@ import org.springframework.security.config.annotation.web.configurers.Expression
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.LdapShaPasswordEncoder;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.password.StandardPasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 
@@ -37,21 +44,30 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
 
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+//        return NoOpPasswordEncoder.getInstance();
+//        return new LdapShaPasswordEncoder();
+//        return new BCryptPasswordEncoder();
+        return SfgPasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+
     // Fluent API
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.inMemoryAuthentication()
                 .withUser("admin")
-                .password("{noop}admin") // {noop} means no operation password encoder store as a plain text
+                .password("{ldap}"+ new LdapShaPasswordEncoder().encode("admin")) // {noop} means no operation password encoder store as a plain text
                 .roles("ADMIN")
                 .and()
                 .withUser("user")
-                .password("{noop}user")
+                .password("{bcrypt}"+new BCryptPasswordEncoder().encode("user"))
                 .roles("USER")
                 .and()
                 .withUser("scott")
-                .password("{noop}tiger")
+                .password("{bcrypt15}" + new BCryptPasswordEncoder().encode("tiger"))
                 .roles("CUSTOMER");
     }
 
