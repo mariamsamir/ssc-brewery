@@ -1,9 +1,13 @@
 package guru.sfg.brewery.config;
 
+import guru.sfg.brewery.security.AuthenticationFilter;
+import guru.sfg.brewery.security.RestAuthHeaderFilter;
+import guru.sfg.brewery.security.RestAuthParameterFilter;
 import guru.sfg.brewery.security.SfgPasswordEncoderFactories;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,14 +24,35 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.StandardPasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+
+    public AuthenticationFilter restAuthHeaderFilter(AuthenticationManager authenticationManager) {
+        RestAuthHeaderFilter restAuthHeaderFilter =
+                new RestAuthHeaderFilter(new AntPathRequestMatcher("/api/**"));
+        restAuthHeaderFilter.setAuthenticationManager(authenticationManager);
+        return restAuthHeaderFilter;
+    }
+
+    public AuthenticationFilter restAuthParamFilter(AuthenticationManager authenticationManager) {
+        RestAuthParameterFilter restAuthParameterFilter =
+                new RestAuthParameterFilter(new AntPathRequestMatcher("/api/**"));
+        restAuthParameterFilter.setAuthenticationManager(authenticationManager);
+        return restAuthParameterFilter;
+    }
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
+        http.addFilterBefore(restAuthHeaderFilter(authenticationManager()),
+                        UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(restAuthParamFilter(authenticationManager()), UsernamePasswordAuthenticationFilter.class)
+                .csrf().disable();
         http.
                 httpBasic(auth ->
                         auth.authenticationEntryPoint(new Http403ForbiddenEntryPoint())
@@ -44,7 +69,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
 
-
     @Bean
     public PasswordEncoder passwordEncoder() {
 //        return NoOpPasswordEncoder.getInstance();
@@ -59,11 +83,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.inMemoryAuthentication()
                 .withUser("admin")
-                .password("{ldap}"+ new LdapShaPasswordEncoder().encode("admin")) // {noop} means no operation password encoder store as a plain text
+                .password("{ldap}" + new LdapShaPasswordEncoder().encode("admin")) // {noop} means no operation password encoder store as a plain text
                 .roles("ADMIN")
                 .and()
                 .withUser("user")
-                .password("{bcrypt}"+new BCryptPasswordEncoder().encode("user"))
+                .password("{bcrypt}" + new BCryptPasswordEncoder().encode("user"))
                 .roles("USER")
                 .and()
                 .withUser("scott")
