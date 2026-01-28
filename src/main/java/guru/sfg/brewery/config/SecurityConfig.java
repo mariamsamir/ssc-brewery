@@ -8,15 +8,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.LdapShaPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
@@ -41,23 +36,28 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
-        http.addFilterBefore(restAuthHeaderFilter(authenticationManager()),
-                        UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(restAuthParamFilter(authenticationManager()), UsernamePasswordAuthenticationFilter.class)
-                .csrf().disable();
+//        http.addFilterBefore(restAuthHeaderFilter(authenticationManager()),
+//                        UsernamePasswordAuthenticationFilter.class)
+//                .addFilterBefore(restAuthParamFilter(authenticationManager()), UsernamePasswordAuthenticationFilter.class)
+//                .csrf().disable();
         http.
-                httpBasic(auth ->
-                        auth.authenticationEntryPoint(new Http403ForbiddenEntryPoint())
-                ).
-                authorizeRequests(authorize -> {
-                            authorize.antMatchers("/", "/webjars/**", "/resources/**", "/login").permitAll()
-                                    .antMatchers("/beers/**").permitAll()
-                                    .antMatchers(HttpMethod.GET, "/api/v1/beer/**").permitAll()
-                                    .mvcMatchers(HttpMethod.GET, "/api/v1/beerUpc/{upc}").permitAll();
-                        }
-                ).
-                authorizeRequests().anyRequest().authenticated().and().formLogin().and().httpBasic();
-
+//                httpBasic(auth ->
+//                        auth.authenticationEntryPoint(new Http403ForbiddenEntryPoint())
+//                ).
+        authorizeRequests(authorize -> {
+            authorize
+                    .antMatchers("/h2-console/**").permitAll()
+                    .antMatchers("/", "/webjars/**", "/resources/**", "/login").permitAll()
+                    .antMatchers("/beers/**").permitAll()
+                    .antMatchers(HttpMethod.GET, "/api/v1/beer/**").permitAll()
+                    .mvcMatchers(HttpMethod.GET, "/api/v1/beerUpc/{upc}").permitAll();
+        }
+).
+                authorizeRequests()
+                .anyRequest().authenticated()
+                .and().formLogin().and().httpBasic()
+                .and().csrf().disable();
+        http.headers().frameOptions().sameOrigin();
     }
 
 
@@ -71,21 +71,21 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     // Fluent API
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-                .withUser("admin")
-                .password("{ldap}" + new LdapShaPasswordEncoder().encode("admin")) // {noop} means no operation password encoder store as a plain text
-                .roles("ADMIN")
-                .and()
-                .withUser("user")
-                .password("{bcrypt}" + new BCryptPasswordEncoder().encode("user"))
-                .roles("USER")
-                .and()
-                .withUser("scott")
-                .password("{bcrypt15}" + new BCryptPasswordEncoder().encode("tiger"))
-                .roles("CUSTOMER");
-    }
+//    @Override
+//    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+//        auth.inMemoryAuthentication()
+//                .withUser("admin")
+//                .password("{ldap}" + new LdapShaPasswordEncoder().encode("admin")) // {noop} means no operation password encoder store as a plain text
+//                .roles("ADMIN")
+//                .and()
+//                .withUser("user")
+//                .password("{bcrypt}" + new BCryptPasswordEncoder().encode("user"))
+//                .roles("USER")
+//                .and()
+//                .withUser("scott")
+//                .password("{bcrypt15}" + new BCryptPasswordEncoder().encode("tiger"))
+//                .roles("CUSTOMER");
+//    }
 
 //    @Override
 //    @Bean
