@@ -29,15 +29,15 @@ public class UserAuthorityLoader implements CommandLineRunner {
     }
 
     private void addUsers() {
-        userService.addUser("admin", "admin", List.of("ADMIN"));
-        userService.addUser("user", "user", List.of("USER"));
-        userService.addUser("scott", "tiger", List.of("CUSTOMER"));
+        userService.addUser("admin", "admin", List.of("ROLE_ADMIN"));
+        userService.addUser("user", "user", List.of("ROLE_USER"));
+        userService.addUser("scott", "tiger", List.of("ROLE_CUSTOMER"));
 
     }
 
     private void addAuthority() {
-        authorityService.addAuthority("ADMIN");
-        authorityService.addAuthority("USER");
-        authorityService.addAuthority("CUSTOMER");
+        authorityService.addAuthority("ROLE_ADMIN");
+        authorityService.addAuthority("ROLE_USER");
+        authorityService.addAuthority("ROLE_CUSTOMER");
     }
 }
