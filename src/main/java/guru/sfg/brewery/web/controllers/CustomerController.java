@@ -49,7 +49,7 @@ public class CustomerController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('customer.read')")
     public String processFindFormReturnMany(Customer customer, BindingResult result, Model model) {
         // find customers by name
         //ToDO: Add Service
@@ -84,7 +84,7 @@ public class CustomerController {
     }
 
     @PostMapping("/new")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('customer.create')")
     public String processCreationForm(Customer customer) {
         //ToDO: Add Service
         Customer newCustomer = Customer.builder()

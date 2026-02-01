@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.Random;
 
@@ -34,10 +33,11 @@ public class BeerRestControllerIT extends BaseIT {
 //    BeerOrderRepository beerOrderRepository;
 
 
-    @WithMockUser("admin")
+//    @WithMockUser("admin")
     @Test
-    void willReturnBeers() throws Exception {
-        mockMvc.perform(get("/api/v1/beer"))
+    void willReturnBeersForAdmin() throws Exception {
+        mockMvc.perform(get("/api/v1/beer")
+                        .with(httpBasic("admin", "admin")))
                 .andExpect(status().isOk());
     }
 
@@ -100,10 +100,10 @@ public class BeerRestControllerIT extends BaseIT {
     }
 
     @Test
-    void willReturnBeer() throws Exception {
+    void willReturnUnAuthWhenFindBeerWithNoAuth() throws Exception {
 
         mockMvc.perform(get("/beers").param("beerName", "")
-        ).andExpect(status().isOk());
+        ).andExpect(status().isUnauthorized());
     }
 
     @DisplayName("Delete Tests")

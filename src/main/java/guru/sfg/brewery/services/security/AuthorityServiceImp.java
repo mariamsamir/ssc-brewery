@@ -16,8 +16,9 @@ public class AuthorityServiceImp implements AuthorityService {
     }
 
     @Override
-    public void addAuthority(String role) {
-        Authority authority = Authority.builder().role(role).build();
+    public Authority addAuthority(String permission) {
+        Authority authority = Authority.builder().permission(permission).build();
         authorityRepository.save(authority);
+        return authority;
     }
 }

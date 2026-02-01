@@ -17,6 +17,7 @@
 
 package guru.sfg.brewery.web.controllers.api;
 
+import guru.sfg.brewery.security.perms.BeerCreatePermission;
 import guru.sfg.brewery.services.BeerService;
 import guru.sfg.brewery.web.model.BeerDto;
 import guru.sfg.brewery.web.model.BeerPagedList;
@@ -47,12 +48,14 @@ public class BeerRestController {
 
     private final BeerService beerService;
 
-    @GetMapping(produces = { "application/json" }, path = "beer")
+
+    @PreAuthorize("hasAuthority('beer.read')")
+    @GetMapping(produces = {"application/json"}, path = "beer")
     public ResponseEntity<BeerPagedList> listBeers(@RequestParam(value = "pageNumber", required = false) Integer pageNumber,
                                                    @RequestParam(value = "pageSize", required = false) Integer pageSize,
                                                    @RequestParam(value = "beerName", required = false) String beerName,
                                                    @RequestParam(value = "beerStyle", required = false) BeerStyleEnum beerStyle,
-                                                   @RequestParam(value = "showInventoryOnHand", required = false) Boolean showInventoryOnHand){
+                                                   @RequestParam(value = "showInventoryOnHand", required = false) Boolean showInventoryOnHand) {
 
         log.debug("Listing Beers");
 
@@ -60,7 +63,7 @@ public class BeerRestController {
             showInventoryOnHand = false;
         }
 
-        if (pageNumber == null || pageNumber < 0){
+        if (pageNumber == null || pageNumber < 0) {
             pageNumber = DEFAULT_PAGE_NUMBER;
         }
 
@@ -73,9 +76,10 @@ public class BeerRestController {
         return new ResponseEntity<>(beerList, HttpStatus.OK);
     }
 
-    @GetMapping(path = {"beer/{beerId}"}, produces = { "application/json" })
+   
+    @GetMapping(path = {"beer/{beerId}"}, produces = {"application/json"})
     public ResponseEntity<BeerDto> getBeerById(@PathVariable("beerId") UUID beerId,
-                                               @RequestParam(value = "showInventoryOnHand", required = false) Boolean showInventoryOnHand){
+                                               @RequestParam(value = "showInventoryOnHand", required = false) Boolean showInventoryOnHand) {
 
         log.debug("Get Request for BeerId: " + beerId);
 
@@ -86,13 +90,16 @@ public class BeerRestController {
         return new ResponseEntity<>(beerService.findBeerById(beerId, showInventoryOnHand), HttpStatus.OK);
     }
 
-    @GetMapping(path = {"beerUpc/{upc}"}, produces = { "application/json" })
-    public ResponseEntity<BeerDto> getBeerByUpc(@PathVariable("upc") String upc){
+   
+    @GetMapping(path = {"beerUpc/{upc}"}, produces = {"application/json"})
+    public ResponseEntity<BeerDto> getBeerByUpc(@PathVariable("upc") String upc) {
         return new ResponseEntity<>(beerService.findBeerByUpc(upc), HttpStatus.OK);
     }
 
+    //    @PreAuthorize("hasAuthority('beer.create')")
+    @BeerCreatePermission
     @PostMapping(path = "beer")
-    public ResponseEntity saveNewBeer(@Valid @RequestBody BeerDto beerDto){
+    public ResponseEntity saveNewBeer(@Valid @RequestBody BeerDto beerDto) {
 
         BeerDto savedDto = beerService.saveBeer(beerDto);
 
@@ -104,8 +111,9 @@ public class BeerRestController {
         return new ResponseEntity(httpHeaders, HttpStatus.CREATED);
     }
 
-    @PutMapping(path = {"beer/{beerId}"}, produces = { "application/json" })
-    public ResponseEntity updateBeer(@PathVariable("beerId") UUID beerId, @Valid @RequestBody BeerDto beerDto){
+    @PreAuthorize("hasAuthority('beer.update')")
+    @PutMapping(path = {"beer/{beerId}"}, produces = {"application/json"})
+    public ResponseEntity updateBeer(@PathVariable("beerId") UUID beerId, @Valid @RequestBody BeerDto beerDto) {
 
         beerService.updateBeer(beerId, beerDto);
 
@@ -114,14 +122,14 @@ public class BeerRestController {
 
     @DeleteMapping({"beer/{beerId}"})
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('ADMIN')")
-    public void deleteBeer(@PathVariable("beerId") UUID beerId){
+    @PreAuthorize("hasAuthority('beer.delete')")
+    public void deleteBeer(@PathVariable("beerId") UUID beerId) {
         beerService.deleteById(beerId);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    ResponseEntity<List> badReqeustHandler(ConstraintViolationException e){
+    ResponseEntity<List> badReqeustHandler(ConstraintViolationException e) {
         List<String> errors = new ArrayList<>(e.getConstraintViolations().size());
 
         e.getConstraintViolations().forEach(constraintViolation -> {

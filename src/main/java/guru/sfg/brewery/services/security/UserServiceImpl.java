@@ -1,8 +1,8 @@
 package guru.sfg.brewery.services.security;
 
-import guru.sfg.brewery.domain.security.Authority;
+import guru.sfg.brewery.domain.security.Role;
 import guru.sfg.brewery.domain.security.User;
-import guru.sfg.brewery.repositories.security.AuthorityRepository;
+import guru.sfg.brewery.repositories.security.RoleRepository;
 import guru.sfg.brewery.repositories.security.UserRepository;
 import guru.sfg.brewery.security.SfgPasswordEncoderFactories;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -19,23 +18,20 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private final UserRepository userRepository;
-    private final AuthorityRepository authorityRepository;
+    private final RoleRepository authorityRepository;
 
 
     @Override
-    public void addUser(String userName, String password, List<String> roles) {
+    public User addUser(String userName, String password, List<Role> roles) {
 
-        List<Authority> authorities = roles.stream()
-                .map(role -> authorityRepository.findByRole(role).
-                        orElseThrow())
-                .collect(Collectors.toList());
 
         User user = User.builder()
                 .username(userName)
                 .password(SfgPasswordEncoderFactories.createDelegatingPasswordEncoder().encode(password))
-                .authorities(authorities)
+                .roles(roles)
                 .build();
         userRepository.save(user);
+        return user;
     }
 
     @Override
