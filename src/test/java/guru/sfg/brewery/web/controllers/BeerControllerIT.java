@@ -2,6 +2,7 @@ package guru.sfg.brewery.web.controllers;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
@@ -14,7 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 public class BeerControllerIT extends BaseIT {
 
-//    @WithMockUser("spring")
+    @WithMockUser("spring")
     @Test
     void willReturnBeersWithMockUser() throws Exception{
         mockMvc.perform(get("/beers/find"))
@@ -24,11 +25,9 @@ public class BeerControllerIT extends BaseIT {
     }
 
     @Test
-    void willReturnBeersWitAnonymous() throws Exception{
+    void willReturnUnAuthBeersWitAnonymous() throws Exception{
         mockMvc.perform(get("/beers/find").with(anonymous()))
-                .andExpect(status().isOk())
-                .andExpect(view().name("beers/findBeers"))
-                .andExpect(model().attributeExists("beer"));
+                .andExpect(status().isUnauthorized());
     }
 
 

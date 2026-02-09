@@ -3,6 +3,7 @@ package guru.sfg.brewery.web.controllers;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -39,7 +40,8 @@ class CustomerControllerIT extends BaseIT {
     void willCreateNewCustomerForAdmin() throws Exception {
         mockMvc.perform(post("/customers/new")
                         .param("customerName", "Foo Customer2")
-                        .with(httpBasic("admin", "admin")))
+                        .with(httpBasic("admin", "admin"))
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection());
     }
 
@@ -54,7 +56,8 @@ class CustomerControllerIT extends BaseIT {
     @Test
     void willReturnUnAuthorizedWhenCreateNewCustomerWithNoAuth() throws Exception {
         mockMvc.perform(post("/customers/new")
-                        .param("customerName", "Foo Customer2"))
+                        .param("customerName", "Foo Customer2")
+                        .with(csrf()))
                 .andExpect(status().isUnauthorized());
     }
 }
