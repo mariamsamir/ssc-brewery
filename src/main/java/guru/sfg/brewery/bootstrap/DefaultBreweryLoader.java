@@ -17,12 +17,18 @@
 package guru.sfg.brewery.bootstrap;
 
 import guru.sfg.brewery.domain.*;
+import guru.sfg.brewery.domain.security.Role;
+import guru.sfg.brewery.domain.security.User;
 import guru.sfg.brewery.repositories.*;
+import guru.sfg.brewery.repositories.security.RoleRepository;
+import guru.sfg.brewery.services.security.UserService;
 import guru.sfg.brewery.web.model.BeerStyleEnum;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -30,11 +36,20 @@ import java.util.UUID;
 /**
  * Created by jt on 2019-01-26.
  */
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class DefaultBreweryLoader implements CommandLineRunner {
 
+
     public static final String TASTING_ROOM = "Tasting Room";
+    public static final String ST_PETE_DISTRIBUTING = "St Pete Distributing";
+    public static final String DUNEDIN_DISTRIBUTING = "Dunedin Distributing";
+    public static final String KEY_WEST_DISTRIBUTORS = "Key West Distributors";
+    public static final String STPETE_USER = "stpete";
+    public static final String DUNEDIN_USER = "dunedin";
+    public static final String KEYWEST_USER = "keywest";
+
     public static final String BEER_1_UPC = "0631234200036";
     public static final String BEER_2_UPC = "0631234300019";
     public static final String BEER_3_UPC = "0083783375213";
@@ -44,14 +59,69 @@ public class DefaultBreweryLoader implements CommandLineRunner {
     private final BeerInventoryRepository beerInventoryRepository;
     private final BeerOrderRepository beerOrderRepository;
     private final CustomerRepository customerRepository;
+    private final UserService userService;
+
+    private final UserAuthorityLoader userAuthorityLoader;
+    private final RoleRepository roleRepository;
 
     @Override
     public void run(String... args) {
+        userAuthorityLoader.addUsers();
         loadBreweryData();
+        loadTastingRoomData();
         loadCustomerData();
     }
 
     private void loadCustomerData() {
+        Role customerRole = roleRepository.findByName("CUSTOMER").orElseThrow();
+
+        //create customers
+        Customer stPeteCustomer = customerRepository.save(Customer.builder()
+                .customerName(ST_PETE_DISTRIBUTING)
+                .apiKey(UUID.randomUUID())
+                .build());
+
+        Customer dunedinCustomer = customerRepository.save(Customer.builder()
+                .customerName(DUNEDIN_DISTRIBUTING)
+                .apiKey(UUID.randomUUID())
+                .build());
+
+        Customer keyWestCustomer = customerRepository.save(Customer.builder()
+                .customerName(KEY_WEST_DISTRIBUTORS)
+                .apiKey(UUID.randomUUID())
+                .build());
+
+        //create users
+        User stPeteUser = userService.addUser(STPETE_USER,
+                "password", List.of(customerRole), stPeteCustomer);
+
+        User dunedinUser = userService.addUser(DUNEDIN_USER,
+                "password", List.of(customerRole), dunedinCustomer);
+
+        User keywest = userService.addUser(KEYWEST_USER,
+                "password", List.of(customerRole), keyWestCustomer);
+
+        //create orders
+        createOrder(stPeteCustomer);
+        createOrder(dunedinCustomer);
+        createOrder(keyWestCustomer);
+
+        log.debug("Orders Loaded: " + beerOrderRepository.count());
+    }
+
+    private BeerOrder createOrder(Customer customer) {
+        return beerOrderRepository.save(BeerOrder.builder()
+                .customer(customer)
+                .orderStatus(OrderStatusEnum.NEW)
+                .beerOrderLines(Set.of(BeerOrderLine.builder()
+                        .beer(beerRepository.findByUpc(BEER_1_UPC))
+                        .orderQuantity(2)
+                        .build()))
+                .build());
+    }
+
+
+    private void loadTastingRoomData() {
         Customer tastingRoom = Customer.builder()
                 .customerName(TASTING_ROOM)
                 .apiKey(UUID.randomUUID())
@@ -70,6 +140,7 @@ public class DefaultBreweryLoader implements CommandLineRunner {
                     .build());
         });
     }
+
 
     private void loadBreweryData() {
         if (breweryRepository.count() == 0) {

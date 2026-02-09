@@ -1,5 +1,6 @@
 package guru.sfg.brewery.services.security;
 
+import guru.sfg.brewery.domain.Customer;
 import guru.sfg.brewery.domain.security.Role;
 import guru.sfg.brewery.domain.security.User;
 import guru.sfg.brewery.repositories.security.RoleRepository;
@@ -34,6 +35,20 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
+
+    @Override
+    public User addUser(String userName, String password, List<Role> roles, Customer customer) {
+
+
+        User user = User.builder()
+                .username(userName)
+                .password(SfgPasswordEncoderFactories.createDelegatingPasswordEncoder().encode(password))
+                .roles(roles)
+                .customer(customer)
+                .build();
+        userRepository.save(user);
+        return user;
+    }
     @Override
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
